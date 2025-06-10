@@ -244,3 +244,44 @@ else:
         conn.close()
         for r in rows:
             st.write(f"{r[1]} | {r[2]} x {r[3]} = ₹{r[5]} | Buyer: {r[6]}")
+    elif menu == "User Management":
+        st.title("👥 User Management")
+
+        # Add User
+        st.subheader("➕ Add New User")
+        new_user = st.text_input("New Username")
+        new_pass = st.text_input("New Password", type="password")
+        if st.button("Add User"):
+            if new_user and new_pass:
+                conn = sqlite3.connect("pharmacy.db")
+                c = conn.cursor()
+                c.execute("SELECT * FROM users WHERE username=?", (new_user,))
+                if c.fetchone():
+                    st.warning("Username already exists!")
+                else:
+                    c.execute("INSERT INTO users VALUES (?, ?)", (new_user, new_pass))
+                    conn.commit()
+                    st.success("User added successfully!")
+                conn.close()
+            else:
+                st.warning("Please enter both username and password.")
+
+        # Existing Users
+        st.subheader("📋 Existing Users")
+        conn = sqlite3.connect("pharmacy.db")
+        c = conn.cursor()
+        users = c.execute("SELECT username FROM users").fetchall()
+        conn.close()
+
+        for user in users:
+            if user[0] != "admin":
+                col1, col2 = st.columns([3, 1])
+                col1.write(user[0])
+                if col2.button("Delete", key=user[0]):
+                    conn = sqlite3.connect("pharmacy.db")
+                    c = conn.cursor()
+                    c.execute("DELETE FROM users WHERE username=?", (user[0],))
+                    conn.commit()
+                    conn.close()
+                    st.success(f"Deleted user {user[0]}")
+                    st.experimental_rerun()
